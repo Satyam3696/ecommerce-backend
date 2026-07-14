@@ -3,8 +3,11 @@ version: "3.8"
 services:
 
   mysql:
+
     image: mysql:8
     container_name: mysql-container
+
+    restart: always
 
     environment:
       MYSQL_ROOT_PASSWORD: 9422385211
@@ -13,23 +16,55 @@ services:
     ports:
       - "3306:3306"
 
-    networks:
-      - ecommerce-network
+    command: --default-authentication-plugin=mysql_native_password
 
     volumes:
       - mysql-data:/var/lib/mysql
+
+    networks:
+      - ecommerce-network
+
+
+    healthcheck:
+
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u",
+          "root",
+          "-p9422385211"
+        ]
+
+      interval: 20s
+      timeout: 10s
+      retries: 10
+
 
 
   backend:
 
     image: ecommerce-backend
+
     container_name: ecommerce-backend
 
+    restart: always
+
+
     depends_on:
-      - mysql
+
+      mysql:
+        condition: service_healthy
+
 
     ports:
+
       - "8080:8080"
+
+
 
     environment:
 
@@ -39,14 +74,20 @@ services:
 
       SPRING_DATASOURCE_PASSWORD: 9422385211
 
+
+
     networks:
+
       - ecommerce-network
+
 
 
 networks:
 
   ecommerce-network:
+
     driver: bridge
+
 
 
 volumes:
