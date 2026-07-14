@@ -25,24 +25,7 @@ services:
       - ecommerce-network
 
 
-    healthcheck:
-
-      test:
-        [
-          "CMD",
-          "mysqladmin",
-          "ping",
-          "-h",
-          "localhost",
-          "-u",
-          "root",
-          "-p9422385211"
-        ]
-
-      interval: 10s
-      timeout: 5s
-      retries: 10
-
+  
 
 
   backend:
@@ -56,9 +39,8 @@ services:
 
     depends_on:
 
-      mysql:
-        condition: service_healthy
-
+      - mysql
+      
 
     ports:
 
