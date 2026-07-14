@@ -1,44 +1,148 @@
 pipeline {
+
     agent any
 
-    tools {
-        jdk 'JDK17'
-        maven 'Maven'
+
+    environment {
+
+        IMAGE_NAME = "ecommerce-backend"
+
+        CONTAINER_NAME = "ecommerce-backend"
+
+        COMPOSE_FILE = "docker-compose.yml"
+
     }
+
 
     stages {
 
+
         stage('Checkout Code') {
+
             steps {
-                git branch: 'feature/docker-setup',
-                    credentialsId: 'github-token',
-                    url: 'https://github.com/Satyam3696/ecommerce-backend.git'
+
+                echo "Cloning repository..."
+
+                checkout scm
+
             }
         }
 
-        stage('Build Project') {
+
+
+        stage('Build Application') {
+
             steps {
-                sh 'mvn clean package -DskipTests'
+
+                echo "Building Spring Boot Application..."
+
+                sh './mvnw clean package -DskipTests'
+
             }
         }
+
+
+
 
         stage('Build Docker Image') {
+
             steps {
-                sh 'docker build -t ecommerce-backend .'
+
+                echo "Building Docker Image..."
+
+                sh """
+
+                docker build -t ${IMAGE_NAME}:latest .
+
+                """
+
             }
         }
+
+
+
+
+        stage('Stop Existing Containers') {
+
+            steps {
+
+                echo "Stopping old containers..."
+
+                sh """
+
+                docker compose -f ${COMPOSE_FILE} down || true
+
+                """
+
+            }
+        }
+
+
+
 
         stage('Deploy Application') {
+
             steps {
-                sh 'docker compose down || true'
-                sh 'docker compose up -d'
+
+                echo "Starting Application using Docker Compose..."
+
+                sh """
+
+                docker compose -f ${COMPOSE_FILE} up -d
+
+                """
+
             }
         }
 
-        stage('Verify Deployment') {
+
+
+
+        stage('Docker Cleanup') {
+
             steps {
-                sh 'docker ps'
+
+                echo "Cleaning unused Docker resources..."
+
+                sh """
+
+                docker image prune -f
+
+                """
+
             }
         }
+
+
     }
+
+
+
+    post {
+
+
+        success {
+
+            echo "Deployment Successful 🚀"
+
+        }
+
+
+        failure {
+
+            echo "Deployment Failed ❌"
+
+        }
+
+
+        always {
+
+            echo "Pipeline Completed"
+
+        }
+
+
+    }
+
+
 }
