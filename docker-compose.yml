@@ -39,8 +39,8 @@ services:
           "-p9422385211"
         ]
 
-      interval: 20s
-      timeout: 10s
+      interval: 10s
+      timeout: 5s
       retries: 10
 
 
