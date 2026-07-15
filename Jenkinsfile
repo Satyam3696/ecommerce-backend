@@ -2,10 +2,15 @@ pipeline {
 
     agent any
 
-
     environment {
 
+        APP_NAME = "ecommerce-backend"
+
         IMAGE_NAME = "ecommerce-backend"
+
+        IMAGE_TAG = "${BUILD_NUMBER}"
+
+        DOCKER_IMAGE = "${IMAGE_NAME}:${IMAGE_TAG}"
 
         CONTAINER_NAME = "ecommerce-backend"
 
@@ -13,136 +18,100 @@ pipeline {
 
     }
 
-
     stages {
 
-
         stage('Checkout Code') {
-
             steps {
-
-                echo "Cloning repository..."
-
+                echo "========== CHECKOUT =========="
                 checkout scm
-
             }
         }
-
-
 
         stage('Build Application') {
-
             steps {
-
-                echo "Building Spring Boot Application..."
-
+                echo "========== MAVEN BUILD =========="
                 sh './mvnw clean package -DskipTests'
-
             }
         }
-
-
-
 
         stage('Build Docker Image') {
-
             steps {
 
-                echo "Building Docker Image..."
+                echo "========== BUILD IMAGE =========="
 
                 sh """
-
-                docker build -t ${IMAGE_NAME}:latest .
-
+                    docker build -t ${DOCKER_IMAGE} .
+                    docker tag ${DOCKER_IMAGE} ${IMAGE_NAME}:latest
                 """
-
             }
         }
-
-
-
 
         stage('Stop Existing Containers') {
-
             steps {
 
-                echo "Stopping old containers..."
+                echo "========== STOP OLD CONTAINERS =========="
 
                 sh """
-
-                docker compose -f ${COMPOSE_FILE} down || true
-
+                    docker compose -f ${COMPOSE_FILE} down || true
                 """
-
             }
         }
-
-
-
 
         stage('Deploy Application') {
 
             steps {
 
-                echo "Starting Application using Docker Compose..."
+                echo "========== DEPLOY =========="
 
                 sh """
+                    export IMAGE_NAME=${IMAGE_NAME}
+                    export IMAGE_TAG=latest
 
-                docker compose -f ${COMPOSE_FILE} up -d
-
+                    docker compose -f ${COMPOSE_FILE} up -d
                 """
-
             }
         }
-
-
-
 
         stage('Docker Cleanup') {
 
             steps {
 
-                echo "Cleaning unused Docker resources..."
+                echo "========== CLEANUP =========="
 
-                sh """
-
-                docker image prune -f
-
-                """
-
+                sh '''
+                    docker image prune -f
+                '''
             }
+
         }
 
-
     }
-
-
 
     post {
 
-
         success {
 
-            echo "Deployment Successful 🚀"
+            echo "======================================="
+            echo "Deployment Successful"
+            echo "Docker Image : ${DOCKER_IMAGE}"
+            echo "======================================="
 
         }
-
 
         failure {
 
-            echo "Deployment Failed ❌"
+            echo "======================================="
+            echo "Deployment Failed"
+            echo "======================================="
 
         }
-
 
         always {
 
-            echo "Pipeline Completed"
+            echo "Pipeline Finished"
 
         }
 
-
     }
-
 
 }
