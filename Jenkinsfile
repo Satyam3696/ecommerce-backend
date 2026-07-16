@@ -115,7 +115,7 @@ pipeline {
 
         failure {
             echo "======================================="
-            echo "PIPELINE FAILED"
+            echo "PIPELINE FAILED " && "Not Successful"
             echo "Check Jenkins Console Output"
             echo "======================================="
         }
