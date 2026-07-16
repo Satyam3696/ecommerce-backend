@@ -2,6 +2,7 @@ pipeline {
 
     agent any
 
+
     environment {
 
         APP_NAME = "ecommerce-backend"
@@ -12,114 +13,262 @@ pipeline {
 
         DOCKER_IMAGE = "${IMAGE_NAME}:${IMAGE_TAG}"
 
-        CONTAINER_NAME = "ecommerce-backend"
-
         COMPOSE_FILE = "docker-compose.yml"
 
     }
 
+
     stages {
 
+
         stage('Checkout Code') {
+
             steps {
-                echo "========== CHECKOUT =========="
+
+                echo "========== CHECKOUT CODE =========="
+
                 checkout scm
+
             }
         }
+
+
 
         stage('Build Application') {
+
             steps {
+
                 echo "========== MAVEN BUILD =========="
-                sh './mvnw clean package -DskipTests'
+
+                sh '''
+                    chmod +x mvnw
+                    ./mvnw clean package
+                '''
+
             }
         }
+
+
+
 
         stage('Build Docker Image') {
+
             steps {
 
-                echo "========== BUILD IMAGE =========="
+
+                echo "========== BUILD DOCKER IMAGE =========="
+
 
                 sh """
-                    docker build -t ${DOCKER_IMAGE} .
-                    docker tag ${DOCKER_IMAGE} ${IMAGE_NAME}:latest
+
+                    docker build \
+                    -t ${DOCKER_IMAGE} .
+
                 """
+
+
             }
         }
 
+
+
+
+
         stage('Stop Existing Containers') {
+
+
             steps {
+
 
                 echo "========== STOP OLD CONTAINERS =========="
 
+
                 sh """
-                    docker compose -f ${COMPOSE_FILE} down || true
+
+                    docker compose \
+                    -f ${COMPOSE_FILE} down || true
+
                 """
+
+
             }
+
         }
+
+
+
+
 
         stage('Deploy Application') {
 
-    steps {
-
-        echo "========== DEPLOY =========="
-
-        withCredentials([
-            string(credentialsId: 'db-username', variable: 'DB_USERNAME'),
-            string(credentialsId: 'db-password', variable: 'DB_PASSWORD')
-        ]) {
-
-            sh """
-                export IMAGE_NAME=${IMAGE_NAME}
-                export IMAGE_TAG=${IMAGE_TAG}
-
-                export DB_USERNAME=${DB_USERNAME}
-                export DB_PASSWORD=${DB_PASSWORD}
-
-                docker compose -f ${COMPOSE_FILE} up -d
-            """
-
-        }
-    }
-}
-        stage('Docker Cleanup') {
 
             steps {
 
-                echo "========== CLEANUP =========="
 
-                sh '''
-                    docker image prune -f
-                '''
+                echo "========== DEPLOY APPLICATION =========="
+
+
+
+                withCredentials([
+
+                    string(credentialsId: 'db-username', variable: 'DB_USERNAME'),
+
+                    string(credentialsId: 'db-password', variable: 'DB_PASSWORD')
+
+                ]) {
+
+
+
+                    sh """
+
+                        export IMAGE_NAME=${IMAGE_NAME}
+
+                        export IMAGE_TAG=${IMAGE_TAG}
+
+
+
+                        export DB_USERNAME=${DB_USERNAME}
+
+                        export DB_PASSWORD=${DB_PASSWORD}
+
+
+
+                        docker compose \
+                        -f ${COMPOSE_FILE} up -d
+
+
+                    """
+
+
+                }
+
+
             }
 
         }
 
+
+
+
+
+        stage('Verify Deployment') {
+
+
+            steps {
+
+
+                echo "========== VERIFY DEPLOYMENT =========="
+
+
+                sh '''
+
+                    echo "Running Containers:"
+
+                    docker ps
+
+
+
+                    echo "Backend Logs:"
+
+                    docker logs ecommerce-backend --tail 50
+
+                '''
+
+
+            }
+
+        }
+
+
+
+
+
+
+        stage('Docker Cleanup') {
+
+
+            steps {
+
+
+                echo "========== CLEANUP OLD IMAGES =========="
+
+
+                sh '''
+
+                    docker image prune -f
+
+                '''
+
+
+            }
+
+        }
+
+
     }
+
+
+
 
     post {
 
+
         success {
 
-            echo "======================================="
-            echo "Deployment Successful"
-            echo "Docker Image : ${DOCKER_IMAGE}"
-            echo "======================================="
+
+            echo """
+
+            =====================================
+
+            PIPELINE SUCCESSFUL
+
+            Application : ${APP_NAME}
+
+            Docker Image : ${DOCKER_IMAGE}
+
+            Status : DEPLOYED
+
+            =====================================
+
+            """
+
 
         }
+
+
+
+
 
         failure {
 
-            echo "======================================="
-            echo "Deployment Failed"
-            echo "======================================="
+
+            echo """
+
+            =====================================
+
+            PIPELINE FAILED
+
+            Check Jenkins Logs
+
+            =====================================
+
+            """
+
 
         }
+
+
+
+
 
         always {
 
-            echo "Pipeline Finished"
+
+            echo "Pipeline Execution Completed"
+
 
         }
+
 
     }
 
