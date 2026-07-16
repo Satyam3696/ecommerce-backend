@@ -1,20 +1,16 @@
 services:
 
   mysql:
-
     image: mysql:8
-
     container_name: mysql-container
-
     restart: always
 
     environment:
       MYSQL_ROOT_PASSWORD: 9422385211
       MYSQL_DATABASE: database_for_multivendor
+
     ports:
       - "3306:3306"
-
-    
 
     volumes:
       - mysql-data:/var/lib/mysql
@@ -23,9 +19,7 @@ services:
       - ecommerce-network
 
 
-
   backend:
-
     image: ${IMAGE_NAME}:${IMAGE_TAG}
 
     container_name: ecommerce-backend
@@ -39,25 +33,18 @@ services:
       - "8080:8080"
 
     environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-container:3306/database_for_multivendor
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 9422385211
 
-      environment:
-
-  SPRING_DATASOURCE_URL: jdbc:mysql://mysql-container:3306/database_for_multivendor
-
-  SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
-
-  SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
     networks:
       - ecommerce-network
-
 
 
 networks:
 
   ecommerce-network:
-
     driver: bridge
-
 
 
 volumes:
