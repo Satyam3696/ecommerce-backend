@@ -70,7 +70,7 @@ pipeline {
 
             sh """
                 export IMAGE_NAME=${IMAGE_NAME}
-                export IMAGE_TAG=latest
+                export IMAGE_TAG=${IMAGE_TAG}
 
                 export DB_USERNAME=${DB_USERNAME}
                 export DB_PASSWORD=${DB_PASSWORD}
