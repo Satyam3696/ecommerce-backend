@@ -59,19 +59,28 @@ pipeline {
 
         stage('Deploy Application') {
 
-            steps {
+    steps {
 
-                echo "========== DEPLOY =========="
+        echo "========== DEPLOY =========="
 
-                sh """
-                    export IMAGE_NAME=${IMAGE_NAME}
-                    export IMAGE_TAG=latest
+        withCredentials([
+            string(credentialsId: 'db-username', variable: 'DB_USERNAME'),
+            string(credentialsId: 'db-password', variable: 'DB_PASSWORD')
+        ]) {
 
-                    docker compose -f ${COMPOSE_FILE} up -d
-                """
-            }
+            sh """
+                export IMAGE_NAME=${IMAGE_NAME}
+                export IMAGE_TAG=latest
+
+                export DB_USERNAME=${DB_USERNAME}
+                export DB_PASSWORD=${DB_PASSWORD}
+
+                docker compose -f ${COMPOSE_FILE} up -d
+            """
+
         }
-
+    }
+}
         stage('Docker Cleanup') {
 
             steps {
